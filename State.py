@@ -1,5 +1,7 @@
 class State:
     def __init__(self):
+        #self.people_list = people_list.copy()
+        #self.broken_list = broken_list.copy()
         self.percept = None
         self.time = 0
         self.people_saved = 0

@@ -14,9 +14,6 @@ class Vertex:
     def __hash__(self):
         return hash(self.id_)
 
-    def take_people(self):
-        self.people = 0
-        return self
 
     def get_brittle(self):
         return self.is_brittle

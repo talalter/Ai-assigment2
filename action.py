@@ -52,3 +52,10 @@ class NoOpAction(Action):
         self.agent.time += 1
         self.move(self.pickup)
         return False
+
+class TerminateAction(Action):
+    def __init__(self, agent):
+        super().__init__(agent)
+
+    def __call__(self):
+        return True
