@@ -76,8 +76,6 @@ class Graph:
                 return vertex
 
     def change_agent_location(self, agent, vertex):
-        agent.add_to_path(vertex)
-        agent.pick(vertex)
         # print(f"agent {agent.id_}, has moved from V%d to V%d\n" % (self.agent_locations[agent.id_].id_ + 1, vertex.id_ + 1))
         self.agent_locations[agent.id_] = vertex
 

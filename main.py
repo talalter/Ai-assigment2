@@ -41,7 +41,7 @@ def ask_for_gameType():
         elif gameType == 3:
             agent = FullyCooperativeAgent(i, cutoff)
         agents_list.append(agent)
-        graph.agent_locations[agent] = graph.vertices[start_vertex]
+        graph.agent_locations[i] = graph.vertices[start_vertex]
     return agents_list
 
 
