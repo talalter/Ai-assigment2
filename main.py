@@ -1,5 +1,6 @@
 from Agent import AdversarialAgent, SemiCooperativeAgent, FullyCooperativeAgent
 from Graph import Graph
+from WorldState import WorldState
 
 #N 4
 #V1
@@ -41,23 +42,41 @@ def ask_for_gameType():
         elif gameType == 3:
             agent = FullyCooperativeAgent(i, cutoff)
         agents_list.append(agent)
-        graph.agent_locations[i] = graph.vertices[start_vertex]
+        graph.agent_locations[agent] = graph.vertices[start_vertex]
     return agents_list
 
 
-def run_agents(world, all_agents):
+
+def run_agents(graph, all_agents):
     i = 0
+    world_state_dict = dict()
     while all_agents:
         runnable_agents = []
         for agent in all_agents:
-            action = agent(world)
-            world.calculate_score()
+            world_state = WorldState(graph)
+            if world_state_dict.get(world_state) == world_state:
+                print("game has ended\n")
+                agent = all_agents[0]
+                print(type(
+                    agent).__name__ + " %d has been removed with a score of %f saved %d with the time of %d\n" % (
+                          agent.id_, ((agent.state.people_saved * 1000) - agent.state.time), agent.state.people_saved,
+                          agent.time))
+                agent = all_agents[1]
+                print(type(
+                    agent).__name__ + " %d has been removed with a score of %f saved %d with the time of %d\n" % (
+                          agent.id_, ((agent.state.people_saved * 1000) - agent.state.time), agent.state.people_saved,
+                          agent.time))
+                exit(0)# game over
+            action = agent(graph)
+            graph.calculate_score()
             if not action():
                 runnable_agents.append(agent)
                 print(type(
                     agent).__name__ + " %d has been removed with a score of %f saved %d with the time of %d\n" % (
                           agent.id_, ((agent.state.people_saved * 1000) - agent.state.time), agent.state.people_saved,
                           agent.time))
+            else:
+                raise Exception("why did you terminate this is not possible in this essignment")
         all_agents = runnable_agents
 
     i += 1
@@ -70,4 +89,3 @@ if __name__ == "__main__":
     graph = Graph(input_txt)
     agents = ask_for_gameType()
     run_agents(graph, agents)
-
