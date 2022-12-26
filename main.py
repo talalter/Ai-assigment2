@@ -59,13 +59,15 @@ def run_agents(graph, all_agents):
                 agent = all_agents[0]
                 print(type(
                     agent).__name__ + " %d has been removed with a score of %f saved %d with the time of %d\n" % (
-                          agent.id_, ((agent.state.people_saved * 1000) - agent.state.time), agent.state.people_saved,
-                          agent.time))
+                          agent.id_, ((agent.state.people_saved * 1000) - agent.state.time),
+                          agent.state.people_saved,
+                          agent.state.time))
                 agent = all_agents[1]
                 print(type(
                     agent).__name__ + " %d has been removed with a score of %f saved %d with the time of %d\n" % (
-                          agent.id_, ((agent.state.people_saved * 1000) - agent.state.time), agent.state.people_saved,
-                          agent.time))
+                          agent.id_, ((agent.state.people_saved * 1000) - agent.state.time),
+                          agent.state.people_saved,
+                          agent.state.time))
                 exit(0)# game over
             action = agent(graph)
             graph.calculate_score()
@@ -73,8 +75,9 @@ def run_agents(graph, all_agents):
                 runnable_agents.append(agent)
                 print(type(
                     agent).__name__ + " %d has been removed with a score of %f saved %d with the time of %d\n" % (
-                          agent.id_, ((agent.state.people_saved * 1000) - agent.state.time), agent.state.people_saved,
-                          agent.time))
+                          agent.id_, ((agent.state.people_saved * 1000) - agent.state.time),
+                          agent.state.people_saved,
+                          agent.state.time))
             else:
                 raise Exception("why did you terminate this is not possible in this essignment")
         all_agents = runnable_agents
