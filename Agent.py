@@ -8,7 +8,7 @@ def generate_state(state):
     broken_list = [vertex.is_broken for vertex in state.percept.G.nodes()]
     scores_tuple = [0, 0]
     location_tuple = [state.percept.agent_locations[0], state.percept.agent_locations[1]]
-    return StateNode(people_list, broken_list, scores_tuple, location_tuple, parent=None)
+    return StateNode(people_list, broken_list, scores_tuple, location_tuple)
 
 
 def return_path(node_state):
