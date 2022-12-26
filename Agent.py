@@ -1,4 +1,3 @@
-from Game import is_terminal_state
 from State import State
 from StateNode import StateNode
 from action import NoOpAction, TraverseAction, TerminateAction

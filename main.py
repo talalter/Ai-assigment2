@@ -28,12 +28,12 @@ from WorldState import WorldState
 # E4 4 5 W4
 # E5 1 3 W5
 def ask_for_gameType():
-    gameType = int(input("game type? 1 for adv 2 for semi 3 for full\n"))
-    cutoff = int(input("depth of cuttof for agents root is 0\n"))
+    gameType = 1#int(input("game type? 1 for adv 2 for semi 3 for full\n"))
+    cutoff = 3#int(input("depth of cuttof for agents root is 0\n"))
     assert gameType == 1 or 2 or 3
     agents_list = []
     for i in range(2):
-        start_vertex = int(input("choose start vertex\n"))
+        start_vertex = 0#int(input("choose start vertex\n"))
         assert gameType == 1 or 2 or 3
         if gameType == 1:
             agent = AdversarialAgent(i, cutoff)
@@ -42,7 +42,7 @@ def ask_for_gameType():
         elif gameType == 3:
             agent = FullyCooperativeAgent(i, cutoff)
         agents_list.append(agent)
-        graph.agent_locations[agent] = graph.vertices[start_vertex]
+        graph.agent_locations[agent.id_] = graph.vertices[start_vertex]
     return agents_list
 
 
