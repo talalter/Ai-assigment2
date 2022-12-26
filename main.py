@@ -1,4 +1,4 @@
-from Agent import AStarAgent, GreedyAStarAgent, RealTimeAStarAgent, SaboteurAgent, HumanAgent
+from Agent import AdversarialAgent, SemiCooperativeAgent, FullyCooperativeAgent
 from Graph import Graph
 
 #N 4
@@ -26,25 +26,20 @@ from Graph import Graph
 # E3 2 3 W1
 # E4 4 5 W4
 # E5 1 3 W5
-def ask_for_agents():
-    how_many_agents = 1# int(input("how many agents"))
+def ask_for_gameType():
+    gameType = int(input("game type? 1 for adv 2 for semi 3 for full\n"))
+    cutoff = int(input("depth of cuttof for agents root is 0\n"))
+    assert gameType == 1 or 2 or 3
     agents_list = []
-    for i in range(how_many_agents):
-        agent_type = 5#int(input("choose type"))
-        start_vertex = 0#int(input("choose start vertex"))
-        assert agent_type == 1 or 2 or 3 or 4 or 5 or 6
-        if agent_type == 3:
-            agent = SaboteurAgent(i)
-        elif agent_type == 4:
-            agent = GreedyAStarAgent(i,
-                                     0)  # (int(input("insert T for agent\n\n"))), (int(input("insert L for agent\n\n"))))
-        elif agent_type == 5:
-            agent = AStarAgent(i, 0)
-        elif agent_type == 6:
-            agent = HumanAgent(i)
-        else:
-            print("agent Type not recognized")
-            continue
+    for i in range(2):
+        start_vertex = int(input("choose start vertex\n"))
+        assert gameType == 1 or 2 or 3
+        if gameType == 1:
+            agent = AdversarialAgent(i, cutoff)
+        elif gameType == 2:
+            agent = SemiCooperativeAgent(i, cutoff)
+        elif gameType == 3:
+            agent = FullyCooperativeAgent(i, cutoff)
         agents_list.append(agent)
         graph.agent_locations[agent] = graph.vertices[start_vertex]
     return agents_list
@@ -73,57 +68,6 @@ if __name__ == "__main__":
     with open('input_graph.txt') as f:
         input_txt = f.read()
     graph = Graph(input_txt)
-    agents = ask_for_agents()
+    agents = ask_for_gameType()
     run_agents(graph, agents)
 
-    # graph = Graph(input_txt)
-    # agent = AStarAgent(0)
-    # graph.agent_locations[agent] = graph.vertices[0]
-    # agents = [agent]
-    # run_agents(graph, agents)
-    #
-    # graph = Graph(input_txt)
-    # agent = AStarAgent(1, 0.000001)
-    # graph.agent_locations[agent] = graph.vertices[0]
-    # agents = [agent]
-    # run_agents(graph, agents)
-    #
-    # graph = Graph(input_txt)
-    # agent = AStarAgent(2, 0.01)
-    # graph.agent_locations[agent] = graph.vertices[0]
-    # agents = [agent]
-    # run_agents(graph, agents)
-    #
-    # graph = Graph(input_txt)
-    # agent = GreedyAStarAgent(0)
-    # graph.agent_locations[agent] = graph.vertices[0]
-    # agents = [agent]
-    # run_agents(graph, agents)
-    #
-    # graph = Graph(input_txt)
-    # agent = GreedyAStarAgent(1, 0.000001)
-    # graph.agent_locations[agent] = graph.vertices[0]
-    # agents = [agent]
-    # run_agents(graph, agents)
-    #
-    # graph = Graph(input_txt)
-    # agent = GreedyAStarAgent(2, 0.01)
-    # graph.agent_locations[agent] = graph.vertices[0]
-    # agents = [agent]
-    # run_agents(graph, agents)
-    #
-    # graph = Graph(input_txt)
-    # agent = RealTimeAStarAgent(0)
-    # graph.agent_locations[agent] = graph.vertices[0]
-    # agents = [agent]
-    # run_agents(graph, agents)
-    #
-    # N 4
-    # V1 B
-    # V2 P23
-    # V3 P2
-    # V4 P4
-    # E1 1 2 W4
-    # E2 1 3 W5
-    # E3 1 4 W2
-    # E4 3 4 W1
