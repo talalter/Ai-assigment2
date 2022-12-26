@@ -1,15 +1,15 @@
+from Game import is_terminal_state
 from State import State
 from StateNode import StateNode
 from action import NoOpAction, TraverseAction, TerminateAction
 
 
-def generate_state(state):
+def generate_state(state, current_agent, other_agent):
     people_list = [vertex.people for vertex in state.percept.G.nodes()]
     broken_list = [vertex.is_broken for vertex in state.percept.G.nodes()]
-    scores_tuple = [0, 0]
-    location_tuple = [state.percept.agent_locations[0], state.percept.agent_locations[1]]
+    scores_tuple = [current_agent.state.people_saved, other_agent.state.people_saved]
+    location_tuple = [state.percept.agent_locations[current_agent.id_], state.percept.agent_locations[other_agent.id_]]
     return StateNode(people_list, broken_list, scores_tuple, location_tuple)
-
 
 def return_path(node_state):
     path = []
@@ -116,11 +116,11 @@ class AdversarialAgent(Agent):
         self.l = l
 
     def search(self):
-        node_state = generate_state(self.state)
         other_agent = None
         for agent in self.state.percept.agents:
             if agent != self:
                 other_agent = agent
+        node_state = generate_state(self.state, self, other_agent)
         score, path_nodes = minimax_decision(self, other_agent, node_state, self.state.percept, True, 2)
         actions_to_leaf = return_path(path_nodes)
         # seq = list(map(lambda x: TraverseAction(self, x.node, True), temp))
