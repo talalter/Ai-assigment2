@@ -56,6 +56,10 @@ class Graph:
         self.vertices = sorted(list(self.G.nodes()))
         self.agent_locations = dict()
         self.total_number_of_people_evacuated = 0
+        self.agents = []
+
+    def get_weight(self, vertex1, vertex2):
+        return self.G
 
     def calculate_score(self):
         for vertex in self.vertices:
@@ -76,8 +80,12 @@ class Graph:
                 return vertex
 
     def change_agent_location(self, agent, vertex):
-        # print(f"agent {agent.id_}, has moved from V%d to V%d\n" % (self.agent_locations[agent.id_].id_ + 1, vertex.id_ + 1))
+        print("agent %d has moved from %d to %d\n" % (agent.id_, self.agent_locations[agent.id_].id_, vertex.id_))
         self.agent_locations[agent.id_] = vertex
+        # agent.add_to_path(vertex)
+        # agent.pick(vertex)
+        # # print(f"agent {agent.id_}, has moved from V%d to V%d\n" % (self.agent_locations[agent.id_].id_ + 1, vertex.id_ + 1))
+        # self.agent_locations[agent.id_] = vertex
 
     def __repr__(self):
         return f"people: {[vertex.people for vertex in self.G.nodes()]}\n" \
