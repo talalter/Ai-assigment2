@@ -29,9 +29,9 @@ class TraverseAction(Action):
 
     def __call__(self):
         if self.graph.agent_locations[self.agent.id_] == self.target_vertex:
-            raise Exception(F"this is is traverse action, why {self.agent} is moving to him self?")
+            print("tried to move to myself probobly tried to give the other agent a good move\n")
         self.move(self.pickup)
-        self.agent.current_vertex = self.target_vertex
+        self.agent.state.current_vertex = self.target_vertex
         return False
 
 
@@ -41,7 +41,6 @@ class NoOpAction(Action):
         self.pickup = pickup
 
     def __call__(self):
-        self.agent.state.time += 1
         self.move(self.pickup)
         return False
 

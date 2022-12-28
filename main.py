@@ -26,9 +26,15 @@ from WorldState import WorldState
 # E3 2 3 W1
 # E4 4 5 W4
 # E5 1 3 W5
-def ask_for_gameType():
+
+def is_goal(state):
+    for i in state.people_list:
+        if i != 0:
+            return False
+    return True
+def ask_for_gametype():
     gameType = int(input("game type? 1 for adv 2 for semi 3 for full\n"))
-    cutoff = int(input("depth of cuttof for agents root is 0\n"))
+    cutoff = 20 # int(input("depth of cuttof for agents root is 0\n"))
     assert gameType == 1 or 2 or 3
     agents_list = []
     for i in range(2):
@@ -41,17 +47,19 @@ def ask_for_gameType():
         elif gameType == 3:
             agent = FullyCooperativeAgent(i, cutoff)
         agents_list.append(agent)
-        graph.agent_locations[agent.id_] = graph.vertices[start_vertex]
+        graph.insert_agent(agent, start_vertex, True)
     return agents_list
 
 
 def run_agents(graph, all_agents):
     i = 0
+    #or (people == 0 for people in world_state.people_list)
     world_state_list = []
     while all_agents:
         runnable_agents = []
         for agent in all_agents:
             world_state = WorldState(graph)
+            print(world_state.people_list)
             if world_state in world_state_list:
                 print("game has ended\n")
                 agent = all_agents[0]
@@ -72,7 +80,7 @@ def run_agents(graph, all_agents):
             graph.calculate_score()
             if not action():
                 runnable_agents.append(agent)
-            else:
+            else:# not suppose to happen
                 print(type(
                     agent).__name__ + " %d has been removed with a score of %f saved %d with the time of %d\n" % (
                           agent.id_, ((agent.state.people_saved * 1000) - agent.state.time),
@@ -89,6 +97,6 @@ if __name__ == "__main__":
     with open('input_graph.txt') as f:
         input_txt = f.read()
     graph = Graph(input_txt)
-    agents = ask_for_gameType()
+    agents = ask_for_gametype()
     graph.agents = agents
     run_agents(graph, agents)

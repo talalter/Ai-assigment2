@@ -58,8 +58,8 @@ class Graph:
         self.total_number_of_people_evacuated = 0
         self.agents = []
 
-    def get_weight(self, vertex1, vertex2):
-        return self.G
+    # def get_weight(self, vertex1, vertex2):
+    #     return self.G
 
     def calculate_score(self):
         for vertex in self.vertices:
@@ -79,13 +79,19 @@ class Graph:
             if vertex.id_ == node:
                 return vertex
 
+    def insert_agent(self, agent, vertexid, pickup):
+        vertex = self.vertices[vertexid]
+        self.agent_locations[agent.id_] = vertex
+        if pickup:
+            agent.state.people_saved += vertex.people
+            self.total_number_of_people_evacuated += vertex.people
+            vertex.people = 0
+        if vertex.is_brittle:
+            vertex.is_broken = True
+
     def change_agent_location(self, agent, vertex):
         print("agent %d has moved from %d to %d\n" % (agent.id_, self.agent_locations[agent.id_].id_, vertex.id_))
         self.agent_locations[agent.id_] = vertex
-        # agent.add_to_path(vertex)
-        # agent.pick(vertex)
-        # # print(f"agent {agent.id_}, has moved from V%d to V%d\n" % (self.agent_locations[agent.id_].id_ + 1, vertex.id_ + 1))
-        # self.agent_locations[agent.id_] = vertex
 
     def __repr__(self):
         return f"people: {[vertex.people for vertex in self.G.nodes()]}\n" \
