@@ -61,9 +61,7 @@ class Graph:
     # def get_weight(self, vertex1, vertex2):
     #     return self.G
 
-    def calculate_score(self):
-        for vertex in self.vertices:
-            print(vertex, "broken:", vertex.is_broken, "people amount: ", vertex.people)
+
 
     def get_neighbors(self, vertex):
         return [neighbor for neighbor in self.G.neighbors(vertex)]

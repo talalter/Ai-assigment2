@@ -27,14 +27,10 @@ from WorldState import WorldState
 # E4 4 5 W4
 # E5 1 3 W5
 
-def is_goal(state):
-    for i in state.people_list:
-        if i != 0:
-            return False
-    return True
+
 def ask_for_gametype():
     gameType = int(input("game type? 1 for adv 2 for semi 3 for full\n"))
-    cutoff = 20 # int(input("depth of cuttof for agents root is 0\n"))
+    cutoff = 14# int(input("depth of cuttof for agents root is 0\n"))
     assert gameType == 1 or 2 or 3
     agents_list = []
     for i in range(2):
@@ -53,14 +49,12 @@ def ask_for_gametype():
 
 def run_agents(graph, all_agents):
     i = 0
-    #or (people == 0 for people in world_state.people_list)
     world_state_list = []
     while all_agents:
         runnable_agents = []
         for agent in all_agents:
-            world_state = WorldState(graph)
-            print(world_state.people_list)
-            if world_state in world_state_list:
+            world_state = WorldState(graph, agent)
+            if world_state in world_state_list or all([people == 0 for people in world_state.people_list]):
                 print("game has ended\n")
                 agent = all_agents[0]
                 print(type(
@@ -77,7 +71,6 @@ def run_agents(graph, all_agents):
                 exit(0)  # game over
             world_state_list.append(world_state)
             action = agent(graph)
-            graph.calculate_score()
             if not action():
                 runnable_agents.append(agent)
             else:# not suppose to happen
