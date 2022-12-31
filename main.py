@@ -30,7 +30,7 @@ from WorldState import WorldState
 
 def ask_for_gametype():
     gameType = int(input("game type? 1 for adv 2 for semi 3 for full\n"))
-    cutoff = 14# int(input("depth of cuttof for agents root is 0\n"))
+    cutoff = 10# int(input("depth of cuttof for agents root is 0\n"))
     assert gameType == 1 or 2 or 3
     agents_list = []
     for i in range(2):
@@ -54,6 +54,7 @@ def run_agents(graph, all_agents):
         runnable_agents = []
         for agent in all_agents:
             world_state = WorldState(graph, agent)
+            print(world_state)
             if world_state in world_state_list or all([people == 0 for people in world_state.people_list]):
                 print("game has ended\n")
                 agent = all_agents[0]

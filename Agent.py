@@ -3,186 +3,106 @@ from StateNode import StateNode
 from action import NoOpAction, TraverseAction, TerminateAction
 
 
-def is_terminal_state(state):
-    return is_goal(state)
-
-
-def is_goal(state):
-    for i in state.people_list:
-        if i != 0:
-            return False
-    return True
-
-
-def generate_state(state, current_agent, other_agent):
+def generate_state(state, agent, other_agent):
     people_list = [vertex.people for vertex in state.percept.G.nodes()]
     broken_list = [vertex.is_broken for vertex in state.percept.G.nodes()]
-    scores_tuple = [current_agent.state.people_saved, other_agent.state.people_saved]
-    location_tuple = [state.percept.agent_locations[current_agent.id_], state.percept.agent_locations[other_agent.id_]]
+    scores_tuple = [agent.state.people_saved, other_agent.state.people_saved]
+    location_tuple = [state.percept.agent_locations[0], state.percept.agent_locations[1]]
     return StateNode(people_list, broken_list, scores_tuple, location_tuple)
 
 
-def return_path(node_state, fully=True):
-    path = []
-    if fully:
-        current_state = node_state[1]
-    else:
-        current_state = node_state[2]
-    while current_state is not None:
-        path.append(current_state.action)
-        current_state = current_state.parent
-    return path[::-1][1:]
+def successorsmaker(agent, statenode, percept, is_other_agent):
+    successorslist = []
+    neighbors = [node for node in percept.get_neighbors(statenode.location_tuple[agent.id_]) if not statenode.broken_list[node.id_]]
+    neighbors.append(statenode.location_tuple[agent.id_])
+    for neighbor in neighbors:
+        people_list = statenode.people_list.copy()
+        broken_list = statenode.broken_list.copy()
+        location_tuple = statenode.location_tuple.copy()
+        scores_tuple = statenode.scores_tuple.copy()
+        if neighbor.is_brittle:
+            broken_list[neighbor.id_] = True
+        if not is_other_agent:
+            scores_tuple[0] += people_list[neighbor.id_]
+        else:
+            scores_tuple[1] += people_list[neighbor.id_]
+        people_list[neighbor.id_] = 0
+        location_tuple[agent.id_] = neighbor
+        successorslist.append([StateNode(people_list, broken_list, scores_tuple,location_tuple), TraverseAction(agent, neighbor)])
+    return successorslist
 
+def minimax(state_node,
+            agent,
+            other_agent,
+            percept,
+            score_class,
+            depth,
+            alpha,
+            beta,
+            maximizing_player):
+    if all([people == 0 for people in state_node.people_list]) or depth == 0:
+        return score_class(state_node.scores_tuple[0], state_node.scores_tuple[1]), None
 
-
-def minimax_decision(agent1, agent2, state, world, turn_of_max, depth=6, alpha=float('-inf'), beta=float('inf')):
-    if is_terminal_state(state) or depth == 0:
-        return state.get_score_minimax(), state
-    people_list, broken_list, location_tuple, scores_tuple = state.get_info()
-    if turn_of_max:
-        max_eval = float('-inf'), None
-        sons = [node for node in world.get_neighbors(location_tuple[0]) if not broken_list[node.id_] or location_tuple[0]]
-        for son in sons:
-            son_people_list = people_list.copy()
-            son_broken_list = broken_list.copy()
-            son_location_tuple = location_tuple.copy()
-            son_scores_tuple = scores_tuple.copy()
-            action = TraverseAction(agent1, son)
-            if son.is_brittle:
-                broken_list[son.id_] = True
-            son_scores_tuple[0] += son_people_list[son.id_]
-            son_people_list[son.id_] = 0
-            son_location_tuple[0] = son
-            new_state = StateNode(son_people_list, son_broken_list, son_scores_tuple,
-                                   son_location_tuple, parent=state, action=action)
-            eval_score, rec_state = minimax_decision(agent1, agent2, new_state, world, False, depth - 1)
-            max_eval = max_eval if max_eval[0] >= eval_score else (eval_score, rec_state)
-            alpha = max(alpha, eval_score)
-            if beta <= alpha:
+    if maximizing_player:
+        max_eval = score_class(-10000, 0)
+        max_action = None
+        successors = successorsmaker(agent, state_node, percept, False)
+        for s, a in successors:
+            space = " "
+            print(space * (15 - depth), "maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[1], a))
+            s_eval, _ = minimax(s, agent, other_agent, percept, score_class, depth - 1, alpha, beta, False)
+            print(space * (15 - depth), "maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[1],s_eval))
+            if s_eval > max_eval:
+                print(space * (15 - depth),  "maximizing: depth=%s currently in node %s found better action %s" % (depth, state_node.location_tuple[1], a))
+                max_eval = s_eval
+                max_action = a
+            if s_eval > alpha:
+                alpha = s_eval
+            if not (beta > alpha):
+                print(space * (15 - depth), "maximizing: breaking")
                 break
-        return max_eval
+        return max_eval, max_action
     else:
-        min_eval = float('inf'), None
-        sons = [node for node in world.get_neighbors(location_tuple[1]) if
-                not broken_list[node.id_] or location_tuple[1]]
-        for son in sons:
-            son_people_list = people_list.copy()
-            son_broken_list = broken_list.copy()
-            son_location_tuple = location_tuple.copy()
-            son_scores_tuple = scores_tuple.copy()
-            if son.is_brittle:
-                broken_list[son.id_] = True
-            son_scores_tuple[1] += son_people_list[son.id_]
-            son_people_list[son.id_] = 0
-            son_location_tuple[1] = son
-            new_state = StateNode(son_people_list, son_broken_list, son_scores_tuple,
-                                  son_location_tuple, parent=state)
-            eval_score, rec_state = minimax_decision(agent1, agent2, new_state, world, True, depth - 1)
-            min_eval = min_eval if min_eval[0] <= eval_score else (eval_score, rec_state)
-            beta = min(beta, eval_score)
-            if beta <= alpha:
+        min_eval = score_class(10000, 0)
+        successors = successorsmaker(other_agent, state_node, percept, True)
+        for s, a in successors:
+            space = " "
+            print(space * (15 - depth), "not maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[0], a))
+            s_eval, _ = minimax(s, agent, other_agent, percept, score_class, depth - 1, alpha, beta, True)
+            print(space * (15 - depth), "not maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[0], s_eval))
+            min_eval = min(min_eval, s_eval)
+            print(space * (15 - depth), "not maximizing: depth=%s currently in node %s min value is %s" % (depth, state_node.location_tuple[0], min_eval))
+            if beta > s_eval:
+                beta = s_eval
+            if not (beta > alpha):
+                print(space * (15 - depth), "not maximizing: breaking")
                 break
-        return min_eval
+        return min_eval, None
 
 
-def semi_cooperative_decision(agent1, agent2, state, world, turn_of_A, depth=6):
-    if is_terminal_state(state) or depth == 0:
-        a = state.get_score_semi()
-        b = a + [state]
-        return b
-    people_list, broken_list, location_tuple, scores_tuple = state.get_info()
-    if turn_of_A:
-        current_eval_A = [float('-inf'), float('-inf'), None]
-        sons = [node for node in world.get_neighbors(location_tuple[0]) if
-                not broken_list[node.id_] or location_tuple[0]]
-        for son in sons:
-            son_people_list = people_list.copy()
-            son_broken_list = broken_list.copy()
-            son_location_tuple = location_tuple.copy()
-            son_scores_tuple = scores_tuple.copy()
+def maxmax(state_node,
+            agent,
+            other_agent,
+            percept,
+            score_class,
+            depth,
+            maximizing_player):
+    if all([people == 0 for people in state_node.people_list]) or depth == 0:
+        return score_class(state_node.scores_tuple[0], state_node.scores_tuple[1]), None
 
-            action = TraverseAction(agent1, son)
-            if son.is_brittle:
-                broken_list[son.id_] = True
-            son_scores_tuple[0] += son_people_list[son.id_]
-            son_people_list[son.id_] = 0
-            son_location_tuple[0] = son
-            new_state = StateNode(son_people_list, son_broken_list, son_scores_tuple,
-                                  son_location_tuple, parent=state, action=action)
-            eval_score_state = semi_cooperative_decision(agent1, agent2, new_state, world, False, depth - 1)
-            if eval_score_state[0] > current_eval_A[0]:
-                current_eval_A = eval_score_state.copy()
-            if eval_score_state[0] == current_eval_A[0] and eval_score_state[1] > current_eval_A[1]:
-                current_eval_A = eval_score_state.copy()
-        return current_eval_A
-    else:
-        current_eval_B = [float('-inf'), float('-inf'), None]
-        sons = [node for node in world.get_neighbors(location_tuple[1]) if
-                not broken_list[node.id_] or location_tuple[1]]
-        for son in sons:
-            son_people_list = people_list.copy()
-            son_broken_list = broken_list.copy()
-            son_location_tuple = location_tuple.copy()
-            son_scores_tuple = scores_tuple.copy()
-            if son.is_brittle:
-                broken_list[son.id_] = True
-            son_scores_tuple[1] += son_people_list[son.id_]
-            son_people_list[son.id_] = 0
-            son_location_tuple[1] = son
-            new_state = StateNode(son_people_list, son_broken_list, son_scores_tuple,
-                                  son_location_tuple, parent=state)
-            eval_score_state = semi_cooperative_decision(agent1, agent2, new_state, world, True, depth - 1)
-            if eval_score_state[0] > current_eval_B[0]:
-                current_eval_B = eval_score_state.copy()
-            if eval_score_state[0] == current_eval_B[0] and eval_score_state[1] > current_eval_B[1]:
-                current_eval_B = eval_score_state.copy()
-        return current_eval_B
-
-
-def fully_cooperative_decision(agent1, agent2, state, world, turn_of_A, depth=6):
-    if is_terminal_state(state) or depth == 0:
-        return state.get_score_fully(), state
-    people_list, broken_list, location_tuple, scores_tuple = state.get_info()
-    if turn_of_A:
-        max_eval_A = float('-inf'), None
-        sons = [node for node in world.get_neighbors(location_tuple[0]) if
-                not broken_list[node.id_] or location_tuple[0]]
-        for son in sons:
-            son_people_list = people_list.copy()
-            son_broken_list = broken_list.copy()
-            son_location_tuple = location_tuple.copy()
-            son_scores_tuple = scores_tuple.copy()
-            action = TraverseAction(agent1, son)
-            if son.is_brittle:
-                broken_list[son.id_] = True
-            son_scores_tuple[0] += son_people_list[son.id_]
-            son_people_list[son.id_] = 0
-            son_location_tuple[0] = son
-            new_state = StateNode(son_people_list, son_broken_list, son_scores_tuple,
-                                  son_location_tuple, parent=state, action=action)
-            eval_score, rec_state = minimax_decision(agent1, agent2, new_state, world, False, depth - 1)
-            max_eval_A = max_eval_A if max_eval_A[0] >= eval_score else (eval_score, rec_state)
-        return max_eval_A
-    else:
-        max_eval_B = float('-inf'), None
-        sons = [node for node in world.get_neighbors(location_tuple[1]) if
-                not broken_list[node.id_] or location_tuple[1]]
-        for son in sons:
-            son_people_list = people_list.copy()
-            son_broken_list = broken_list.copy()
-            son_location_tuple = location_tuple.copy()
-            son_scores_tuple = scores_tuple.copy()
-            if son.is_brittle:
-                broken_list[son.id_] = True
-            son_scores_tuple[1] += son_people_list[son.id_]
-            son_people_list[son.id_] = 0
-            son_location_tuple[1] = son
-            new_state = StateNode(son_people_list, son_broken_list, son_scores_tuple,
-                                  son_location_tuple, parent=state)
-            eval_score, rec_state = fully_cooperative_decision(agent1, agent2, new_state, True, depth - 1)
-            max_eval_B = max_eval_B if max_eval_B[0] >= eval_score else (eval_score, rec_state)
-        return max_eval_B
-
+    max_eval = score_class(-10000, 0)
+    max_action = None
+    successors = successorsmaker(agent if maximizing_player else other_agent, state_node, percept, not maximizing_player)
+    for s, a in successors:
+        space = " "
+        print(space * (15 - depth), "maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[1], a))
+        s_eval, _ = maxmax(s, agent, other_agent, percept, score_class, depth - 1, not maximizing_player)
+        print(space * (15 - depth), "maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[1],s_eval))
+        if s_eval > max_eval:
+            print(space * (15 - depth),  "maximizing: depth=%s currently in node %s found better action %s" % (depth, state_node.location_tuple[1], a))
+            max_eval = s_eval
+            max_action = a
+    return max_eval, max_action
 
 class Agent:
     def __init__(self, id_):
@@ -223,21 +143,59 @@ class Agent:
         return action
 
 
+class Score:
+    def __init__(self, my_score, other_score):
+        self.my_score = my_score
+        self.other_score = other_score
+
+    def __gt__(self, other):
+        raise NotImplementedError
+
+    def __repr__(self):
+        return "<%s, %s>" % (self.my_score, self.other_score)
+
+
+class ZeroSumScore(Score):
+    def get_score(self):
+        return self.my_score - self.other_score
+
+    def __gt__(self, other):
+        return self.get_score() > other.get_score()
+
+
+class SemiCoopScore(Score):
+    def __gt__(self, other):
+        if self.my_score > other.my_score:
+            return True
+        elif self.my_score == other.my_score:
+            return self.other_score > other.other_score
+        else:
+            return False
+
+class FullCoopScore(Score):
+    def get_score(self):
+        return self.my_score + self.other_score
+
+    def __gt__(self, other):
+        return self.get_score() > other.get_score()
+
 class AdversarialAgent(Agent):
     def __init__(self, id_, d):
         super().__init__(id_)
         self.d = d
 
     def search(self):
-        other_agent = None
-        for agent in self.state.percept.agents:
-            if agent != self:
-                other_agent = agent
-        node_state = generate_state(self.state, self, other_agent)
-        path_nodes = minimax_decision(self, other_agent, node_state, self.state.percept, True, self.d)
-        actions_to_leaf = return_path(path_nodes)
-        return actions_to_leaf[0::2]
+        agent = self
+        if self.id_ == 0:
+            other_agent = self.state.percept.agents[1]
+        else:
+            other_agent = self.state.percept.agents[0]
 
+        state_node = generate_state(self.state, agent, other_agent)
+        alpha = ZeroSumScore(-10000, 0)
+        beta = ZeroSumScore(10000, 0)
+        _, action = minimax(state_node, agent, other_agent, self.state.percept, ZeroSumScore, self.d, alpha, beta, True)
+        return [action]
 
 class SemiCooperativeAgent(Agent):
     def __init__(self, id_, d=1):
@@ -245,14 +203,17 @@ class SemiCooperativeAgent(Agent):
         self.d = d
 
     def search(self):
-        other_agent = None
-        for agent in self.state.percept.agents:
-            if agent != self:
-                other_agent = agent
-        node_state = generate_state(self.state, self, other_agent)
-        path_nodes = semi_cooperative_decision(self, other_agent, node_state, self.state.percept, True, self.d)
-        actions_to_leaf = return_path(path_nodes, False)
-        return actions_to_leaf[0::2]
+        agent = self
+        if self.id_ == 0:
+            other_agent = self.state.percept.agents[1]
+        else:
+            other_agent = self.state.percept.agents[0]
+
+        state_node = generate_state(self.state, agent, other_agent)
+        alpha = SemiCoopScore(-10000, 0)
+        beta = SemiCoopScore(10000, 0)
+        _, action = minimax(state_node, agent, other_agent, self.state.percept, SemiCoopScore, self.d, alpha, beta, True)
+        return [action]
 
 
 class FullyCooperativeAgent(Agent):
@@ -261,11 +222,12 @@ class FullyCooperativeAgent(Agent):
         self.d = d
 
     def search(self):
-        other_agent = None
-        for agent in self.state.percept.agents:
-            if agent != self:
-                other_agent = agent
-        node_state = generate_state(self.state, self, other_agent)
-        path_nodes = fully_cooperative_decision(self, other_agent, node_state, self.state.percept, True, self.d)
-        actions_to_leaf = return_path(path_nodes)
-        return actions_to_leaf[0::2]
+        agent = self
+        if self.id_ == 0:
+            other_agent = self.state.percept.agents[1]
+        else:
+            other_agent = self.state.percept.agents[0]
+
+        state_node = generate_state(self.state, agent, other_agent)
+        _, action = maxmax(state_node, agent, other_agent, self.state.percept, FullCoopScore, self.d, True)
+        return [action]

@@ -8,7 +8,7 @@ class Action:
         raise NotImplementedError
 
     def __repr__(self):
-        return self.__class__.__name__
+        return self.__class__.__name__ + " " + str(self.target_vertex)
 
     def move(self, pickup):
         self.graph.change_agent_location(self.agent, self.target_vertex)
