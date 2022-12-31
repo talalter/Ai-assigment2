@@ -3,3 +3,5 @@
 /.idea/
 /.git/
 *.pyc
+*.pdf
+*.zip

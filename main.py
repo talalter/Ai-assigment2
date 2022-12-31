@@ -30,7 +30,7 @@ from WorldState import WorldState
 
 def ask_for_gametype():
     gameType = int(input("game type? 1 for adv 2 for semi 3 for full\n"))
-    cutoff = 10# int(input("depth of cuttof for agents root is 0\n"))
+    cutoff = int(input("depth of cuttof for agents root is 0\n"))
     assert gameType == 1 or 2 or 3
     agents_list = []
     for i in range(2):

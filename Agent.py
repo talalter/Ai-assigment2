@@ -8,7 +8,7 @@ def generate_state(state, agent, other_agent):
     broken_list = [vertex.is_broken for vertex in state.percept.G.nodes()]
     scores_tuple = [agent.state.people_saved, other_agent.state.people_saved]
     location_tuple = [state.percept.agent_locations[0], state.percept.agent_locations[1]]
-    return StateNode(people_list, broken_list, scores_tuple, location_tuple)
+    return StateNode(people_list, broken_list, scores_tuple, location_tuple, True)
 
 
 def successorsmaker(agent, statenode, percept, is_other_agent):
@@ -28,7 +28,7 @@ def successorsmaker(agent, statenode, percept, is_other_agent):
             scores_tuple[1] += people_list[neighbor.id_]
         people_list[neighbor.id_] = 0
         location_tuple[agent.id_] = neighbor
-        successorslist.append([StateNode(people_list, broken_list, scores_tuple,location_tuple), TraverseAction(agent, neighbor)])
+        successorslist.append([StateNode(people_list, broken_list, scores_tuple,location_tuple,is_other_agent), TraverseAction(agent, neighbor)])
     return successorslist
 
 def minimax(state_node,
@@ -39,43 +39,45 @@ def minimax(state_node,
             depth,
             alpha,
             beta,
-            maximizing_player):
-    if all([people == 0 for people in state_node.people_list]) or depth == 0:
+            maximizing_player,
+            state_node_list):
+    if state_node in state_node_list or all([people == 0 for people in state_node.people_list]) or depth == 0:
         return score_class(state_node.scores_tuple[0], state_node.scores_tuple[1]), None
-
+    state_node_list = state_node_list.copy()
+    state_node_list.append(state_node)
     if maximizing_player:
         max_eval = score_class(-10000, 0)
         max_action = None
         successors = successorsmaker(agent, state_node, percept, False)
         for s, a in successors:
-            space = " "
-            print(space * (15 - depth), "maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[1], a))
-            s_eval, _ = minimax(s, agent, other_agent, percept, score_class, depth - 1, alpha, beta, False)
-            print(space * (15 - depth), "maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[1],s_eval))
+            # space = " "
+            # print(space * (15 - depth), "maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[1], a))
+            s_eval, _ = minimax(s, agent, other_agent, percept, score_class, depth - 1, alpha, beta, False, state_node_list)
+            # print(space * (15 - depth), "maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[1],s_eval))
             if s_eval > max_eval:
-                print(space * (15 - depth),  "maximizing: depth=%s currently in node %s found better action %s" % (depth, state_node.location_tuple[1], a))
+                # print(space * (15 - depth),  "maximizing: depth=%s currently in node %s found better action %s" % (depth, state_node.location_tuple[1], a))
                 max_eval = s_eval
                 max_action = a
             if s_eval > alpha:
                 alpha = s_eval
             if not (beta > alpha):
-                print(space * (15 - depth), "maximizing: breaking")
+                # print(space * (15 - depth), "maximizing: breaking")
                 break
         return max_eval, max_action
     else:
         min_eval = score_class(10000, 0)
         successors = successorsmaker(other_agent, state_node, percept, True)
         for s, a in successors:
-            space = " "
-            print(space * (15 - depth), "not maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[0], a))
-            s_eval, _ = minimax(s, agent, other_agent, percept, score_class, depth - 1, alpha, beta, True)
-            print(space * (15 - depth), "not maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[0], s_eval))
+            # space = " "
+            # print(space * (15 - depth), "not maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[0], a))
+            s_eval, _ = minimax(s, agent, other_agent, percept, score_class, depth - 1, alpha, beta, True, state_node_list)
+            # print(space * (15 - depth), "not maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[0], s_eval))
             min_eval = min(min_eval, s_eval)
-            print(space * (15 - depth), "not maximizing: depth=%s currently in node %s min value is %s" % (depth, state_node.location_tuple[0], min_eval))
+            # print(space * (15 - depth), "not maximizing: depth=%s currently in node %s min value is %s" % (depth, state_node.location_tuple[0], min_eval))
             if beta > s_eval:
                 beta = s_eval
             if not (beta > alpha):
-                print(space * (15 - depth), "not maximizing: breaking")
+                # print(space * (15 - depth), "not maximizing: breaking")
                 break
         return min_eval, None
 
@@ -86,20 +88,23 @@ def maxmax(state_node,
             percept,
             score_class,
             depth,
-            maximizing_player):
-    if all([people == 0 for people in state_node.people_list]) or depth == 0:
+            maximizing_player,
+            state_node_list):
+    if state_node in state_node_list or all([people == 0 for people in state_node.people_list]) or depth == 0:
         return score_class(state_node.scores_tuple[0], state_node.scores_tuple[1]), None
 
+    state_node_list = state_node_list.copy()
+    state_node_list.append(state_node)
     max_eval = score_class(-10000, 0)
     max_action = None
     successors = successorsmaker(agent if maximizing_player else other_agent, state_node, percept, not maximizing_player)
     for s, a in successors:
-        space = " "
-        print(space * (15 - depth), "maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[1], a))
-        s_eval, _ = maxmax(s, agent, other_agent, percept, score_class, depth - 1, not maximizing_player)
-        print(space * (15 - depth), "maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[1],s_eval))
+        # space = " "
+        # print(space * (15 - depth), "maximizing: depth=%s currently in node %s checking action %s" % (depth, state_node.location_tuple[1], a))
+        s_eval, _ = maxmax(s, agent, other_agent, percept, score_class, depth - 1, not maximizing_player, state_node_list)
+        # print(space * (15 - depth), "maximizing: depth=%s currently in node %s got score %s" % (depth, state_node.location_tuple[1],s_eval))
         if s_eval > max_eval:
-            print(space * (15 - depth),  "maximizing: depth=%s currently in node %s found better action %s" % (depth, state_node.location_tuple[1], a))
+            # print(space * (15 - depth),  "maximizing: depth=%s currently in node %s found better action %s" % (depth, state_node.location_tuple[1], a))
             max_eval = s_eval
             max_action = a
     return max_eval, max_action
@@ -190,11 +195,10 @@ class AdversarialAgent(Agent):
             other_agent = self.state.percept.agents[1]
         else:
             other_agent = self.state.percept.agents[0]
-
         state_node = generate_state(self.state, agent, other_agent)
         alpha = ZeroSumScore(-10000, 0)
         beta = ZeroSumScore(10000, 0)
-        _, action = minimax(state_node, agent, other_agent, self.state.percept, ZeroSumScore, self.d, alpha, beta, True)
+        _, action = minimax(state_node, agent, other_agent, self.state.percept, ZeroSumScore, self.d, alpha, beta, True, [])
         return [action]
 
 class SemiCooperativeAgent(Agent):
@@ -212,7 +216,7 @@ class SemiCooperativeAgent(Agent):
         state_node = generate_state(self.state, agent, other_agent)
         alpha = SemiCoopScore(-10000, 0)
         beta = SemiCoopScore(10000, 0)
-        _, action = minimax(state_node, agent, other_agent, self.state.percept, SemiCoopScore, self.d, alpha, beta, True)
+        _, action = minimax(state_node, agent, other_agent, self.state.percept, SemiCoopScore, self.d, alpha, beta, True, [])
         return [action]
 
 
@@ -229,5 +233,5 @@ class FullyCooperativeAgent(Agent):
             other_agent = self.state.percept.agents[0]
 
         state_node = generate_state(self.state, agent, other_agent)
-        _, action = maxmax(state_node, agent, other_agent, self.state.percept, FullCoopScore, self.d, True)
+        _, action = maxmax(state_node, agent, other_agent, self.state.percept, FullCoopScore, self.d, True, [])
         return [action]
